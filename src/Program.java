@@ -38,7 +38,7 @@ public class Program {
         String nameFunc = getIdentifier();
         if(nameFunc == null)    return null;
 
-        if(currentLine[position] == '(')
+        if(currentLine[position] != '(')
             throw new SyntaxError();
         position++;
 
@@ -52,15 +52,18 @@ public class Program {
             return null;
         }
         position++;
-        if(currentLine[position] == '{')
+        if(currentLine[position] != '{')
             throw new SyntaxError();
         position++;
 
         StringBuilder expr = new StringBuilder();
-        while(currentLine[position] != '}'){
+        while(currentLine[position] != '}' && position < currentLine.length){
             expr.append(currentLine[position]);
             position++;
         }
+
+        if(position == currentLine.length)
+            throw new SyntaxError();
 
         Tree rightBranch = (new ParseExpression(expr.toString())).getBuiltTree();
 
@@ -130,7 +133,7 @@ public class Program {
             Integer dividing = decideExpr(expression.left, currentFunc);
             assert(divided != null && dividing != null);
             if(divided == 0)
-                throw new RuntimeException("("+dividing.toString()+
+                throw new RuntimeError("("+dividing.toString()+
                         "/"+divided.toString()+"):" + Integer.toString(numOfString));
             return dividing / divided;
         }
@@ -163,52 +166,7 @@ public class Program {
             else return decideExpr(expression.right.left, currentFunc);
         }
         else if (expression.getContent().getTypeOfNode() == TypeOfNode.CALLING){
-            Tree findingFunc = null;
-            for(Tree func : functionDefinition){
-                if(func.getContent().getValue()
-                        .equals(expression.left.getContent().getValue())){
-                    findingFunc = func;
-                }
-            }
-
-            if(findingFunc == null){
-                throw new FunctionNotFound(expression.left.getContent().getValue() +
-                        ":" + Integer.toString(numOfString));
-            }
-
-            Tree param = findingFunc.left;
-            Tree arg = expression.right;
-            ArrayList<Node> currentArgs = new ArrayList<>();
-            while (param != null || arg != null){
-                if(param == null || arg == null){
-                    throw new ArgsNumMismatch(findingFunc.getContent().getValue() +
-                            ":" + Integer.toString(numOfString));
-                }
-
-                if(param.right == null){
-                    currentArgs.add(null);
-                }
-                else{
-                    currentArgs.add(param.right.getContent());
-                }
-
-                Integer decidedResOfArg = decideExpr(arg.left, currentFunc);
-                assert(decidedResOfArg != null);
-                Node node = new Node(TypeOfNode.NUMBER, decidedResOfArg.toString());
-                param.right = new Tree(param, null, null, node);
-
-                arg = arg.right;
-                param = param.left;
-            }
-
-
-            Integer ret = decideExpr(findingFunc.right, findingFunc);
-            param = findingFunc.left;
-            for (Node j : currentArgs){
-                param.right.setContent(j);
-                param = param.left;
-            }
-            return ret;
+            return callingFunction(expression, currentFunc);
         }
         else if(expression.getContent().getTypeOfNode() == TypeOfNode.IDENTIFIER){
             if(currentFunc == null){
@@ -239,5 +197,54 @@ public class Program {
             throw new SyntaxError();
         }
         throw new SyntaxError();
+    }
+
+    private Integer callingFunction(Tree expression, Tree currentFunc) throws ValidationException{
+        Tree findingFunc = null;
+        for(Tree func : functionDefinition){
+            if(func.getContent().getValue()
+                    .equals(expression.left.getContent().getValue())){
+                findingFunc = func;
+            }
+        }
+
+        if(findingFunc == null){
+            throw new FunctionNotFound(expression.left.getContent().getValue() +
+                    ":" + Integer.toString(numOfString));
+        }
+
+        Tree param = findingFunc.left;
+        Tree arg = expression.right;
+        ArrayList<Node> currentArgs = new ArrayList<>();
+        while (param != null || arg != null){
+            if(param == null || arg == null){
+                throw new ArgsNumMismatch(findingFunc.getContent().getValue() +
+                        ":" + Integer.toString(numOfString));
+            }
+
+            if(param.right == null){
+                currentArgs.add(null);
+            }
+            else{
+                currentArgs.add(param.right.getContent());
+            }
+
+            Integer decidedResOfArg = decideExpr(arg.left, currentFunc);
+            assert(decidedResOfArg != null);
+            Node node = new Node(TypeOfNode.NUMBER, decidedResOfArg.toString());
+            param.right = new Tree(param, null, null, node);
+
+            arg = arg.right;
+            param = param.left;
+        }
+
+
+        Integer ret = decideExpr(findingFunc.right, findingFunc);
+        param = findingFunc.left;
+        for (Node j : currentArgs){
+            param.right.setContent(j);
+            param = param.left;
+        }
+        return ret;
     }
 }

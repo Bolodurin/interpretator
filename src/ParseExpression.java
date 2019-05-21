@@ -53,13 +53,13 @@ public class ParseExpression {
         Tree leftBranch = getExpression();
 
         assert(leftBranch != null);
-        if(receivedCharArray[position] == ']')
+        if(receivedCharArray[position] != ']')
             throw new SyntaxError();
         position++;
-        if(receivedCharArray[position] == '?')
+        if(receivedCharArray[position] != '?')
             throw new SyntaxError();
         position++;
-        if(receivedCharArray[position] == '(')
+        if(receivedCharArray[position] != '(')
             throw new SyntaxError();
         position++;
 
@@ -68,19 +68,19 @@ public class ParseExpression {
         Node elseNode = new Node(TypeOfNode.ELSE, "");
 
         assert(rightLeftBranch != null);
-        if(receivedCharArray[position] == ')')
+        if(receivedCharArray[position] != ')')
             throw new SyntaxError();
         position++;
-        if(receivedCharArray[position] == ':')
+        if(receivedCharArray[position] != ':')
             throw new SyntaxError();
         position++;
-        if(receivedCharArray[position] == '(')
+        if(receivedCharArray[position] != '(')
             throw new SyntaxError();
         position++;
 
         Tree rightRightBranch = getExpression();
 
-        if(receivedCharArray[position] == ')')
+        if(receivedCharArray[position] != ')')
             throw new SyntaxError();
         position++;
         assert(rightRightBranch != null);
@@ -102,7 +102,7 @@ public class ParseExpression {
 
         Tree rightBranch = getListArgument();
 
-        if(receivedCharArray[position] == ')')
+        if(receivedCharArray[position] != ')')
             throw new SyntaxError();
         position++;
 
@@ -217,14 +217,14 @@ public class ParseExpression {
         while (currChar >= '0' && currChar <= '9'){
             value.append(currChar);
             position++;
-            if(position == receivedCharArray.length)
-                throw new SyntaxError();
-            currChar = receivedCharArray[position];
+            if(position < receivedCharArray.length)
+                currChar = receivedCharArray[position];
+            else   break;
         }
 
 
         assert(value.length() != 0);
-        if(value.toString().toCharArray()[0] == '0')
+        if(value.toString().toCharArray()[0] == '0' && value.length() > 1)
             throw new SyntaxError();
 
         return value.toString();
